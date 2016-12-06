@@ -1,0 +1,31 @@
+{
+  "name": "to-api",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "src",
+    "test"
+  ],
+  "scripts": {
+    "build": "babel src --out-dir dist --ignore *.test.js",
+    "test": "jest",
+    "prepublish": "npm test && npm run build"
+  },
+  "author": "Vladimir Shushkov <vladimir@shushkov.ru>",
+  "license": "MIT",
+  "dependencies": {
+    "isomorphic-fetch": "^2.2.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-core": "^6.18.2",
+    "babel-jest": "^17.0.2",
+    "babel-polyfill": "^6.16.0",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-stage-0": "^6.16.0",
+    "expect": "^1.20.2",
+    "jest-cli": "^17.0.3"
+  }
+}
