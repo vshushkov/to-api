@@ -17,7 +17,7 @@ function assert(user) {
           url: `${baseUrl}`,
           options: {
             method: 'post',
-            body: { email: 'bla@bla.com' },
+            body: "{\"email\":\"bla@bla.com\"}",
             headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
           }
         }
@@ -29,7 +29,7 @@ function assert(user) {
           url: `${baseUrl}123`,
           options: {
             method: 'put',
-            body: { email: 'bla2@bla2.com' },
+            body: "{\"email\":\"bla2@bla2.com\"}",
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
@@ -152,7 +152,7 @@ describe('API', () => {
           url: `${baseUrl}/fail/value`,
           options: {
             method: 'post',
-            body: { bla2: 'value' },
+            body: "{\"bla2\":\"value\"}",
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'

@@ -99,8 +99,9 @@ export default function api(methods, { baseUrl = defaultConfig.baseUrl, fetch = 
       const untitledMethod = (params) => {
         const { url, method, body } = parseParams(params, methodSpec, baseUrl);
         const headers = Object.assign({}, defaultConfig.headers, methodSpec.headers || {});
+        const toJson = headers['Content-Type'] && headers['Content-Type'].indexOf('json') !== -1;
 
-        return fetch(url, { method, body, headers })
+        return fetch(url, { method, body: toJson ? JSON.stringify(body) : body, headers })
           .then(parseResponse);
       };
 
