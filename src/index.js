@@ -34,15 +34,16 @@ export function addHeader(name, value) {
 const pathParamsPattern = new RegExp(':([a-z\-\d]+)', 'ig');
 
 export function parseResponse(response) {
-  const isError = response.status >= 400;
-  return response.json()
-    .then(response => {
-      if (isError) {
-        return Promise.reject(response);
-      }
+  if (response.status < 400) {
+    if (response.status > 200) {
+      return null;
+    }
 
-      return response;
-    });
+    return response.json();
+  }
+
+  return response.json()
+    .then(err => Promise.reject(err));
 }
 
 function toQueryString(obj) {
