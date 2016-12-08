@@ -1,6 +1,6 @@
 # to-api
 
-Library `to-api` generates REST API methods using [`fetch`](https://fetch.spec.whatwg.org) under the hood.
+Library `to-api` generates REST API client with [`fetch`](https://fetch.spec.whatwg.org) under the hood.
 
 ## Usage
 
@@ -16,6 +16,9 @@ const user = api({
 }, { baseUrl: 'http://api/users' });
 
 user.create({ email: 'user@example.com' })
+  .then(response => ...);
+
+user.findById({ id: 'user-id' })
   .then(response => ...);
 ```
 
