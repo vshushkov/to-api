@@ -5,15 +5,17 @@ Library `to-api` generates REST API client with [`fetch`](https://fetch.spec.wha
 ## Usage
 
 ```js
-import api from 'to-api';
+import apiCreator from 'to-api';
 
-const user = api({
+const creator = apiCreator({ baseUrl: 'http://api/users' });
+
+const user = creator.create({
   create: 'POST /',
   updateById: 'PUT /:id',
   deleteById: 'DELETE /:id',
   find: '/',
   findById: 'GET /:id'
-}, { baseUrl: 'http://api/users' });
+});
 
 user.create({ email: 'user@example.com' })
   .then(response => ...);

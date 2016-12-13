@@ -1,5 +1,5 @@
 import expect from 'expect';
-import api, { parseResponse, reset, addHeader, setFetch, setBaseUrl } from '../src';
+import apiCreator, { parseResponse } from '../src';
 
 const baseUrl = 'http://api/users/';
 const createResponse = ({ status, body }) => ({ status, json: () => Promise.resolve(JSON.parse(body)) });
@@ -85,9 +85,9 @@ function assert(user) {
 describe('API', () => {
 
   it('create simple api', () => {
-    reset();
+    const creator = apiCreator({ baseUrl, fetch });
 
-    const user = api({
+    const user = creator.create({
       create: {
         path: '/',
         method: 'post'
@@ -108,31 +108,30 @@ describe('API', () => {
         path: '/:id',
         method: 'get'
       }
-    }, { baseUrl, fetch });
+    });
 
     return assert(user);
   });
 
   it('create simple api short style', () => {
-    reset();
+    const creator = apiCreator({ baseUrl, fetch });
 
-    const user = api({
+    const user = creator.create({
       create: 'POST /',
       updateById: 'PUT /:id',
       deleteById: 'DELETE /:id',
       find: '/',
       findById: 'GET /:id'
-    }, { baseUrl, fetch });
+    });
 
     return assert(user);
   });
 
   it('handle error', () => {
-    reset();
-
     const baseUrl = 'http://api/users';
+    const creator = apiCreator({ baseUrl, fetch });
 
-    const user = api({
+    const user = creator.create({
       fail: {
         path: '/fail/:bla',
         method: 'post'
@@ -141,7 +140,7 @@ describe('API', () => {
         path: '/:id',
         method: 'get'
       }
-    }, { baseUrl, fetch });
+    });
 
     return user.fail({ bla: 'value', bla2: 'value' })
       .then(() => {
@@ -163,14 +162,16 @@ describe('API', () => {
 
   });
 
-  it('default baseUrl and fetch', () => {
-    reset();
+  it('setting custom baseUrl, fetch and headers', () => {
+    const creator = apiCreator({
+      fetch,
+      baseUrl: 'http://api/accounts',
+      headers: {
+        'x-access-token': '123'
+      }
+    });
 
-    setBaseUrl('http://api/accounts');
-    setFetch(fetch);
-    addHeader('x-access-token', '123');
-
-    const user = api({
+    const user = creator.create({
       findById: {
         path: '/:id',
         method: 'get',
@@ -195,13 +196,53 @@ describe('API', () => {
           }
         }
       }))
+      .then(() => {
+        creator.addHeader('x-access-token2', '123');
+        creator.addHeader('x-access-token', '234');
+      })
+      .then(() => user.findById({ id: 'value2' }))
+      .then(response => expect(response).toEqual({
+        result: {
+          url: 'http://api/accounts/value2',
+          options: {
+            method: 'get',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'x-access-token2': '123',
+              'x-access-token': '234',
+              'x-custom-header': 'custom-value'
+            }
+          }
+        }
+      }));
+  });
 
+  it('remove headers', () => {
+    const creator = apiCreator({ fetch });
+
+    creator.removeHeader('content-type');
+
+    const user = creator.create({ findById: 'GET /:id' });
+
+    return user.findById({ id: 'value' })
+      .then(response => expect(response).toEqual({
+        result: {
+          url: '/value',
+          options: {
+            method: 'get',
+            headers: {
+              'Accept': 'application/json'
+            }
+          }
+        }
+      }));
   });
 
   it('several path params', () => {
-    reset();
+    const creator = apiCreator();
 
-    const model = api({
+    const model = creator.create({
       method1: {
         path: '/:idOnceAgain/:id',
         method: 'get'

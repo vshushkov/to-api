@@ -1,7 +1,8 @@
 import fetchOrig from 'isomorphic-fetch';
 import omit from 'lodash/omit';
+import findKey from 'lodash/findKey';
 
-export const defaultConfig = {
+const defaultConfig = {
   fetch: fetchOrig,
   baseUrl: '/',
   headers: {
@@ -9,27 +10,6 @@ export const defaultConfig = {
     'Content-Type': 'application/json'
   }
 };
-
-export function reset() {
-  defaultConfig.fetch = fetchOrig;
-  defaultConfig.baseUrl = '/';
-  defaultConfig.headers = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  };
-}
-
-export function setFetch(fetch) {
-  defaultConfig.fetch = fetch;
-}
-
-export function setBaseUrl(baseUrl) {
-  defaultConfig.baseUrl = baseUrl;
-}
-
-export function addHeader(name, value) {
-  defaultConfig.headers[name] = value;
-}
 
 const pathParamsPattern = new RegExp(':([a-z\-\d]+)', 'ig');
 
@@ -83,33 +63,67 @@ function parseParams(inputParams = {}, { path = '', method = 'get' }, baseUrl) {
   return { url, method: method.toLowerCase(), body: !isGet && !isParamsEmpty ? params : undefined };
 }
 
-export default function api(methods, { baseUrl = defaultConfig.baseUrl, fetch = defaultConfig.fetch } = {}) {
-  return Object.keys(methods)
-    .reduce((api, methodName) => {
-      let methodSpec = methods[methodName];
+export class ApiCreator {
 
-      if (typeof methodSpec === 'string') {
-        const [method, path] = methodSpec.trim().split(' ');
-        methodSpec = {
-          method: ['get', 'post', 'delete', 'put', 'patch', 'head']
-            .indexOf(method.toLowerCase()) !== -1 ? method : 'get',
-          path: path || method
+  constructor({ baseUrl = defaultConfig.baseUrl, fetch = defaultConfig.fetch,
+    headers = defaultConfig.headers } = defaultConfig) {
+    this.baseUrl = baseUrl;
+    this.fetch = fetch;
+    this.headers = Object.assign({}, defaultConfig.headers, headers || {});;
+  }
+
+  _getHeader(headers, rawName) {
+    const name = Object.keys(headers)
+      .find(key => rawName.toLowerCase() === key.toLowerCase())
+    return { name, value: this.headers[name] };
+  }
+
+  addHeader(rawName, value) {
+    const { name } = this._getHeader(this.headers, rawName);
+    this.headers[name || rawName] = value;
+  }
+
+  removeHeader(rawName) {
+    const { name } = this._getHeader(this.headers, rawName);
+    if (name) {
+      delete this.headers[name];
+    }
+  }
+
+  create(methods, { baseUrl = this.baseUrl, fetch = this.fetch } = {}) {
+    return Object.keys(methods)
+      .reduce((api, methodName) => {
+        let methodSpec = methods[methodName];
+
+        if (typeof methodSpec === 'string') {
+          const [method, path] = methodSpec.trim().split(' ');
+          methodSpec = {
+            method: ['get', 'post', 'delete', 'put', 'patch', 'head']
+              .indexOf(method.toLowerCase()) !== -1 ? method : 'get',
+            path: path || method
+          };
+        }
+
+        const untitledMethod = (params) => {
+          const { url, method, body } = parseParams(params, methodSpec, baseUrl);
+          const headers = Object.assign({}, this.headers, methodSpec.headers || {});
+          const contentType = this._getHeader(headers, 'content-type').value || '';
+          const toJson = contentType.indexOf('json') !== -1;
+
+          return fetch(url, { method, body: toJson ? JSON.stringify(body) : body, headers })
+            .then(parseResponse);
         };
-      }
 
-      const untitledMethod = (params) => {
-        const { url, method, body } = parseParams(params, methodSpec, baseUrl);
-        const headers = Object.assign({}, defaultConfig.headers, methodSpec.headers || {});
-        const toJson = headers['Content-Type'] && headers['Content-Type'].indexOf('json') !== -1;
+        api[methodName] = new Function('method',
+          `return function ${methodName}(params) { return method(params); };`
+        )(untitledMethod);
 
-        return fetch(url, { method, body: toJson ? JSON.stringify(body) : body, headers })
-          .then(parseResponse);
-      };
+        return api;
+      }, {});
+  }
+}
 
-      api[methodName] = new Function('method',
-        `return function ${methodName}(params) { return method(params); };`
-      )(untitledMethod);
-
-      return api;
-    }, {});
+export default function apiCreator({ baseUrl = defaultConfig.baseUrl,
+  fetch = defaultConfig.fetch, headers = defaultConfig.headers } = defaultConfig) {
+  return new ApiCreator({ baseUrl, fetch, headers });
 }
