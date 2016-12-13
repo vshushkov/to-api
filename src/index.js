@@ -69,7 +69,12 @@ export class ApiCreator {
     headers = defaultConfig.headers } = defaultConfig) {
     this.baseUrl = baseUrl;
     this.fetch = fetch;
-    this.headers = Object.assign({}, defaultConfig.headers, headers || {});;
+    this.headers = Object.assign({}, defaultConfig.headers, headers || {});
+
+    this._getHeader = this._getHeader.bind(this);
+    this.addHeader = this.addHeader.bind(this);
+    this.removeHeader = this.removeHeader.bind(this);
+    this.create = this.create.bind(this);
   }
 
   _getHeader(headers, rawName) {
@@ -90,7 +95,7 @@ export class ApiCreator {
     }
   }
 
-  create(methods, { baseUrl = this.baseUrl, fetch = null } = {}) {
+  create(methods, { baseUrl = this.baseUrl, fetch = this.fetch } = {}) {
     return Object.keys(methods)
       .reduce((api, methodName) => {
         let methodSpec = methods[methodName];
@@ -114,7 +119,7 @@ export class ApiCreator {
             body: toJson ? JSON.stringify(body) : body
           };
 
-          return (fetch || this.fetch)(url, options)
+          return fetch(url, options)
             .then(parseResponse);
         };
 
