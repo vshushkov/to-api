@@ -39,7 +39,9 @@ function toQueryString(obj) {
   return parts.join("&");
 }
 
-function parseParams(inputParams = {}, { path = '', method = 'get' }, baseUrl) {
+function parseParams(inputParams = {}, methodSpec, baseUrl) {
+  const { path = '', method = 'get' } = methodSpec;
+
   let url = baseUrl.lastIndexOf('/') === baseUrl.length - 1 ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
   url += `${path.indexOf('/') === 0 ? path : '/' + path}`;
 
@@ -132,7 +134,6 @@ export class ApiCreator {
   }
 }
 
-export default function apiCreator({ baseUrl = defaultConfig.baseUrl,
-  fetch = defaultConfig.fetch, headers = defaultConfig.headers } = defaultConfig) {
-  return new ApiCreator({ baseUrl, fetch, headers });
+export default function apiCreator(config = defaultConfig) {
+  return new ApiCreator(config);
 }
