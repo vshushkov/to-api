@@ -90,7 +90,7 @@ export class ApiCreator {
     }
   }
 
-  create(methods, { baseUrl = this.baseUrl, fetch = this.fetch } = {}) {
+  create(methods, { baseUrl = this.baseUrl, fetch = null } = {}) {
     return Object.keys(methods)
       .reduce((api, methodName) => {
         let methodSpec = methods[methodName];
@@ -109,8 +109,12 @@ export class ApiCreator {
           const headers = Object.assign({}, this.headers, methodSpec.headers || {});
           const contentType = this._getHeader(headers, 'content-type').value || '';
           const toJson = contentType.indexOf('json') !== -1;
+          const options = {
+            method, headers,
+            body: toJson ? JSON.stringify(body) : body
+          };
 
-          return fetch(url, { method, body: toJson ? JSON.stringify(body) : body, headers })
+          return (fetch || this.fetch)(url, options)
             .then(parseResponse);
         };
 
