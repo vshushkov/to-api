@@ -218,6 +218,23 @@ describe('API', () => {
       }));
   });
 
+  it('getting headers', () => {
+    const creator = apiCreator({
+      fetch,
+      baseUrl: 'http://api/accounts',
+      headers: {
+        'x-access-token': '123'
+      }
+    });
+
+    expect(creator.getHeader('x-access-token')).toEqual('123');
+    expect(creator.getHeader('X-Access-Token')).toEqual('123');
+
+    creator.addHeader('some-header', 'some-value');
+
+    expect(creator.getHeader('some-header')).toEqual('some-value');
+  });
+
   it('remove headers', () => {
     const creator = apiCreator({ fetch });
 

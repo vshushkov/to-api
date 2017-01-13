@@ -1,6 +1,6 @@
 {
   "name": "to-api",
-  "version": "0.1.3",
+  "version": "0.1.2",
   "description": "",
   "main": "dist/index.js",
   "files": [

@@ -73,16 +73,26 @@ export class ApiCreator {
     this.fetch = fetch;
     this.headers = Object.assign({}, defaultConfig.headers, headers || {});
 
-    this._getHeader = this._getHeader.bind(this);
     this.addHeader = this.addHeader.bind(this);
     this.removeHeader = this.removeHeader.bind(this);
+    this.getHeader = this.getHeader.bind(this);
     this.create = this.create.bind(this);
+    this.clone = this.clone.bind(this);
+  }
+
+  clone({ baseUrl = this.baseUrl, fetch = this.fetch, headers = this.headers } = {}) {
+    return new ApiCreator({ baseUrl, fetch, headers });
   }
 
   _getHeader(headers, rawName) {
     const name = Object.keys(headers)
-      .find(key => rawName.toLowerCase() === key.toLowerCase())
-    return { name, value: this.headers[name] };
+      .find(key => rawName.toLowerCase() === key.toLowerCase());
+    return { name, value: headers[name] };
+  }
+
+  getHeader(name) {
+    const header = this._getHeader(this.headers, name);
+    return header.value;
   }
 
   addHeader(rawName, value) {
