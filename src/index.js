@@ -127,7 +127,8 @@ export class ApiCreator {
           const contentType = this._getHeader(headers, 'content-type').value || '';
           const toJson = contentType.indexOf('json') !== -1;
           const options = {
-            method, headers,
+            method: method.toUpperCase(),
+            headers,
             body: toJson ? JSON.stringify(body) : body
           };
 

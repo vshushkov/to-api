@@ -16,7 +16,7 @@ function assert(user) {
         result: {
           url: `${baseUrl}`,
           options: {
-            method: 'post',
+            method: 'POST',
             body: "{\"email\":\"bla@bla.com\"}",
             headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
           }
@@ -28,8 +28,23 @@ function assert(user) {
         result: {
           url: `${baseUrl}123`,
           options: {
-            method: 'put',
+            method: 'PUT',
             body: "{\"email\":\"bla2@bla2.com\"}",
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          }
+        }
+      })),
+
+    user.patchById({ id: '123', email: 'bla3@bla3.com' })
+      .then(response => expect(response).toEqual({
+        result: {
+          url: `${baseUrl}123`,
+          options: {
+            method: 'PATCH',
+            body: "{\"email\":\"bla3@bla3.com\"}",
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
@@ -43,7 +58,7 @@ function assert(user) {
         result: {
           url: `${baseUrl}123`,
           options: {
-            method: 'delete',
+            method: 'DELETE',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
@@ -57,7 +72,7 @@ function assert(user) {
         result: {
           url: `${baseUrl}?where=%7B%22email%22%3A%22bla%40bla.com%22%7D`,
           options: {
-            method: 'get',
+            method: 'GET',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
@@ -71,7 +86,7 @@ function assert(user) {
         result: {
           url: `${baseUrl}123`,
           options: {
-            method: 'get',
+            method: 'GET',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
@@ -90,23 +105,27 @@ describe('API', () => {
     const user = creator.create({
       create: {
         path: '/',
-        method: 'post'
+        method: 'POST'
       },
       updateById: {
         path: '/:id',
-        method: 'put'
+        method: 'PUT'
+      },
+      patchById: {
+        path: '/:id',
+        method: 'PATCH'
       },
       deleteById: {
         path: '/:id',
-        method: 'delete'
+        method: 'DELETE'
       },
       find: {
         path: '/',
-        method: 'get'
+        method: 'GET'
       },
       findById: {
         path: '/:id',
-        method: 'get'
+        method: 'GET'
       }
     });
 
@@ -119,6 +138,7 @@ describe('API', () => {
     const user = creator.create({
       create: 'POST /',
       updateById: 'PUT /:id',
+      patchById: 'PATCH /:id',
       deleteById: 'DELETE /:id',
       find: '/',
       findById: 'GET /:id'
@@ -134,11 +154,11 @@ describe('API', () => {
     const user = creator.create({
       fail: {
         path: '/fail/:bla',
-        method: 'post'
+        method: 'POST'
       },
       findById: {
         path: '/:id',
-        method: 'get'
+        method: 'GET'
       }
     });
 
@@ -150,7 +170,7 @@ describe('API', () => {
         result: {
           url: `${baseUrl}/fail/value`,
           options: {
-            method: 'post',
+            method: 'POST',
             body: "{\"bla2\":\"value\"}",
             headers: {
               'Accept': 'application/json',
@@ -186,7 +206,7 @@ describe('API', () => {
         result: {
           url: 'http://api/accounts/value',
           options: {
-            method: 'get',
+            method: 'GET',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
@@ -205,7 +225,7 @@ describe('API', () => {
         result: {
           url: 'http://api/accounts/value2',
           options: {
-            method: 'get',
+            method: 'GET',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
@@ -247,7 +267,7 @@ describe('API', () => {
         result: {
           url: '/value',
           options: {
-            method: 'get',
+            method: 'GET',
             headers: {
               'Accept': 'application/json'
             }
@@ -262,11 +282,11 @@ describe('API', () => {
     const model = creator.create({
       method1: {
         path: '/:idOnceAgain/:id',
-        method: 'get'
+        method: 'GET'
       },
       method2: {
         path: '/:id/:idOnceAgain',
-        method: 'get'
+        method: 'GET'
       }
     }, { baseUrl, fetch });
 
@@ -276,7 +296,7 @@ describe('API', () => {
           result: {
             url: 'http://api/users/value2/value1?anotherId=value3',
             options: {
-              method: 'get',
+              method: 'GET',
               headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
@@ -290,7 +310,7 @@ describe('API', () => {
           result: {
             url: 'http://api/users/value1/value2',
             options: {
-              method: 'get',
+              method: 'GET',
               headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
