@@ -1,19 +1,15 @@
 import fetchOrig from 'isomorphic-fetch';
 import omit from 'lodash/omit';
-import findKey from 'lodash/findKey';
+import isFunction from 'lodash/isFunction';
 
-const defaultConfig = {
-  fetch: fetchOrig,
-  baseUrl: '/',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
+const pathParamsPattern = new RegExp(':([a-z-d]+)', 'ig');
+
+const defaultHeaders = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json'
 };
 
-const pathParamsPattern = new RegExp(':([a-z\-\d]+)', 'ig');
-
-export function parseResponse(response) {
+export function defaultParseResponse(response) {
   if (response.status < 400) {
     if (response.status > 200) {
       return null;
@@ -22,8 +18,7 @@ export function parseResponse(response) {
     return response.json();
   }
 
-  return response.json()
-    .then(err => Promise.reject(err));
+  return response.json().then(err => Promise.reject(err));
 }
 
 function toQueryString(obj) {
@@ -32,17 +27,20 @@ function toQueryString(obj) {
   for (let i in obj) {
     if (obj.hasOwnProperty(i)) {
       value = typeof obj[i] !== 'string' ? JSON.stringify(obj[i]) : obj[i];
-      parts.push(encodeURIComponent(i) + "=" + encodeURIComponent(value));
+      parts.push(encodeURIComponent(i) + '=' + encodeURIComponent(value));
     }
   }
 
-  return parts.join("&");
+  return parts.join('&');
 }
 
 function parseParams(inputParams = {}, methodSpec, baseUrl) {
   const { path = '', method = 'get' } = methodSpec;
 
-  let url = baseUrl.lastIndexOf('/') === baseUrl.length - 1 ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+  let url =
+    baseUrl.lastIndexOf('/') === baseUrl.length - 1
+      ? baseUrl.substring(0, baseUrl.length - 1)
+      : baseUrl;
   url += `${path.indexOf('/') === 0 ? path : '/' + path}`;
 
   let execResult;
@@ -51,8 +49,9 @@ function parseParams(inputParams = {}, methodSpec, baseUrl) {
     pathParams.push(execResult[1]);
   }
 
-  pathParams.sort((a, b) => b.length - a.length)
-    .forEach((param) => url = url.replace(`:${param}`, inputParams[param]));
+  pathParams
+    .sort((a, b) => b.length - a.length)
+    .forEach(param => (url = url.replace(`:${param}`, inputParams[param])));
 
   const isGet = method.toLowerCase() === 'get';
   const params = omit(inputParams, pathParams);
@@ -62,16 +61,27 @@ function parseParams(inputParams = {}, methodSpec, baseUrl) {
     url += (url.indexOf('?') !== -1 ? '&' : '?') + toQueryString(params);
   }
 
-  return { url, method: method.toLowerCase(), body: !isGet && !isParamsEmpty ? params : undefined };
+  return {
+    url,
+    method: method.toLowerCase(),
+    body: !isGet && !isParamsEmpty ? params : undefined
+  };
 }
 
 export class ApiCreator {
+  constructor({ baseUrl, fetch, parseResponse, headers } = {}) {
+    this.baseUrl = (baseUrl || '/').toString();
+    this.fetch = fetch || fetchOrig;
+    this.headers = Object.assign({}, defaultHeaders, headers || {});
+    this.parseResponse = parseResponse || defaultParseResponse;
 
-  constructor({ baseUrl = defaultConfig.baseUrl, fetch = defaultConfig.fetch,
-    headers = defaultConfig.headers } = defaultConfig) {
-    this.baseUrl = baseUrl;
-    this.fetch = fetch;
-    this.headers = Object.assign({}, defaultConfig.headers, headers || {});
+    if (!isFunction(this.parseResponse)) {
+      throw new Error("to-api: 'parseResponse' is not a function");
+    }
+
+    if (!isFunction(this.fetch)) {
+      throw new Error("to-api: 'fetch' is not a function");
+    }
 
     this.addHeader = this.addHeader.bind(this);
     this.removeHeader = this.removeHeader.bind(this);
@@ -80,13 +90,21 @@ export class ApiCreator {
     this.clone = this.clone.bind(this);
   }
 
-  clone({ baseUrl = this.baseUrl, fetch = this.fetch, headers = this.headers } = {}) {
-    return new ApiCreator({ baseUrl, fetch, headers });
+  clone(
+    {
+      baseUrl = this.baseUrl,
+      fetch = this.fetch,
+      headers = this.headers,
+      parseResponse = this.parseResponse
+    } = {}
+  ) {
+    return new ApiCreator({ baseUrl, fetch, headers, parseResponse });
   }
 
   _getHeader(headers, rawName) {
-    const name = Object.keys(headers)
-      .find(key => rawName.toLowerCase() === key.toLowerCase());
+    const name = Object.keys(headers).find(
+      key => rawName.toLowerCase() === key.toLowerCase()
+    );
     return { name, value: headers[name] };
   }
 
@@ -107,44 +125,63 @@ export class ApiCreator {
     }
   }
 
-  create(methods, { baseUrl = this.baseUrl, fetch = this.fetch } = {}) {
-    return Object.keys(methods)
-      .reduce((api, methodName) => {
-        let methodSpec = methods[methodName];
+  create(
+    methods,
+    {
+      baseUrl = this.baseUrl,
+      fetch = this.fetch,
+      parseResponse = this.parseResponse
+    } = {}
+  ) {
+    return Object.keys(methods).reduce((api, methodName) => {
+      let methodSpec = methods[methodName];
 
-        if (typeof methodSpec === 'string') {
-          const [method, path] = methodSpec.trim().split(' ');
-          methodSpec = {
-            method: ['get', 'post', 'delete', 'put', 'patch', 'head']
-              .indexOf(method.toLowerCase()) !== -1 ? method : 'get',
-            path: path || method
-          };
-        }
+      if (typeof methodSpec === 'string') {
+        const [method, path] = methodSpec.trim().split(' ');
+        methodSpec = {
+          method:
+            ['get', 'post', 'delete', 'put', 'patch', 'head'].indexOf(
+              method.toLowerCase()
+            ) !== -1
+              ? method
+              : 'get',
+          path: path || method
+        };
+      }
 
-        const untitledMethod = (params) => {
-          const { url, method, body } = parseParams(params, methodSpec, baseUrl);
-          const headers = Object.assign({}, this.headers, methodSpec.headers || {});
-          const contentType = this._getHeader(headers, 'content-type').value || '';
-          const toJson = contentType.indexOf('json') !== -1;
-          const options = {
-            method: method.toUpperCase(),
-            headers,
-            body: toJson ? JSON.stringify(body) : body
-          };
-
-          return fetch(url, options)
-            .then(parseResponse);
+      const untitledMethod = params => {
+        const { url, method, body } = parseParams(params, methodSpec, baseUrl);
+        const headers = Object.assign(
+          {},
+          this.headers,
+          methodSpec.headers || {}
+        );
+        const contentType =
+          this._getHeader(headers, 'content-type').value || '';
+        const toJson = contentType.indexOf('json') !== -1;
+        const options = {
+          method: method.toUpperCase(),
+          headers,
+          body: toJson ? JSON.stringify(body) : body
         };
 
-        api[methodName] = new Function('method',
-          `return function ${methodName}(params) { return method(params); };`
-        )(untitledMethod);
+        return fetch(url, options).then(
+          isFunction(methodSpec.parseResponse)
+            ? methodSpec.parseResponse
+            : parseResponse
+        );
+      };
 
-        return api;
-      }, {});
+      api[methodName] = new Function(
+        'method',
+        `return function ${methodName}(params) { return method(params); };`
+      )(untitledMethod);
+
+      return api;
+    }, {});
   }
 }
 
-export default function apiCreator(config = defaultConfig) {
+export default function apiCreator(config) {
   return new ApiCreator(config);
 }
