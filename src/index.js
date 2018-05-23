@@ -34,8 +34,12 @@ function toQueryString(obj) {
   return parts.join('&');
 }
 
-function parseParams(inputParams = {}, methodSpec, baseUrl) {
+function parseParams(_inputParams = {}, methodSpec, baseUrl, transformRequest) {
   const { path = '', method = 'get' } = methodSpec;
+
+  const inputParams = isFunction(transformRequest)
+    ? transformRequest(_inputParams)
+    : _inputParams;
 
   let url =
     baseUrl.lastIndexOf('/') === baseUrl.length - 1
@@ -69,14 +73,25 @@ function parseParams(inputParams = {}, methodSpec, baseUrl) {
 }
 
 export class ApiCreator {
-  constructor({ baseUrl, fetch, parseResponse, headers } = {}) {
+  constructor({
+    baseUrl,
+    fetch,
+    parseResponse,
+    transformRequest,
+    headers
+  } = {}) {
     this.baseUrl = (baseUrl || '/').toString();
     this.fetch = fetch || fetchOrig;
     this.headers = Object.assign({}, defaultHeaders, headers || {});
     this.parseResponse = parseResponse || defaultParseResponse;
+    this.transformRequest = transformRequest;
 
     if (!isFunction(this.parseResponse)) {
       throw new Error("to-api: 'parseResponse' is not a function");
+    }
+
+    if (this.transformRequest && !isFunction(this.transformRequest)) {
+      throw new Error("to-api: 'transformRequest' is not a function");
     }
 
     if (!isFunction(this.fetch)) {
@@ -90,15 +105,20 @@ export class ApiCreator {
     this.clone = this.clone.bind(this);
   }
 
-  clone(
-    {
-      baseUrl = this.baseUrl,
-      fetch = this.fetch,
-      headers = this.headers,
-      parseResponse = this.parseResponse
-    } = {}
-  ) {
-    return new ApiCreator({ baseUrl, fetch, headers, parseResponse });
+  clone({
+    baseUrl = this.baseUrl,
+    fetch = this.fetch,
+    headers = this.headers,
+    parseResponse = this.parseResponse,
+    transformRequest = this.transformRequest
+  } = {}) {
+    return new ApiCreator({
+      baseUrl,
+      fetch,
+      headers,
+      parseResponse,
+      transformRequest
+    });
   }
 
   _getHeader(headers, rawName) {
@@ -130,7 +150,8 @@ export class ApiCreator {
     {
       baseUrl = this.baseUrl,
       fetch = this.fetch,
-      parseResponse = this.parseResponse
+      parseResponse = this.parseResponse,
+      transformRequest = this.transformRequest
     } = {}
   ) {
     return Object.keys(methods).reduce((api, methodName) => {
@@ -150,7 +171,14 @@ export class ApiCreator {
       }
 
       const untitledMethod = params => {
-        const { url, method, body } = parseParams(params, methodSpec, baseUrl);
+        const { url, method, body } = parseParams(
+          params,
+          methodSpec,
+          baseUrl,
+          isFunction(methodSpec.transformRequest)
+            ? methodSpec.transformRequest
+            : transformRequest
+        );
         const headers = Object.assign(
           {},
           this.headers,
