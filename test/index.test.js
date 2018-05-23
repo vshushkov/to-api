@@ -421,4 +421,57 @@ describe('API', () => {
       })
     );
   });
+
+  it('transformResponse #1', () => {
+    const creator = apiCreator();
+
+    const transformResponse = response => {
+      return { body: response.result.options.body };
+    };
+
+    const model = creator.create(
+      {
+        method1: {
+          path: '/:idOnceAgain/:id',
+          method: 'POST',
+          transformResponse
+        }
+      },
+      { baseUrl, fetch }
+    );
+
+    const params = { id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' };
+
+    return model.method1(params).then(response =>
+      expect(response).toEqual({
+        body: JSON.stringify({ anotherId: 'value3' })
+      })
+    );
+  });
+
+  it('transformResponse #2', () => {
+    const creator = apiCreator();
+
+    const transformResponse = response => {
+      return { body: response.result.options.body };
+    };
+
+    const model = creator.create(
+      {
+        method1: {
+          path: '/:idOnceAgain/:id',
+          method: 'POST'
+        }
+      },
+      { baseUrl, fetch, transformResponse }
+    );
+
+    const params = { id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' };
+
+    return model.method1(params).then(response =>
+      expect(response).toEqual({
+        body: JSON.stringify({ anotherId: 'value3' })
+      })
+    );
+  });
 });

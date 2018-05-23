@@ -9,6 +9,8 @@ const defaultHeaders = {
   'Content-Type': 'application/json'
 };
 
+const empty = data => data;
+
 export function defaultParseResponse(response) {
   if (response.status < 400) {
     if (response.status > 200) {
@@ -78,6 +80,7 @@ export class ApiCreator {
     fetch,
     parseResponse,
     transformRequest,
+    transformResponse,
     headers
   } = {}) {
     this.baseUrl = (baseUrl || '/').toString();
@@ -85,6 +88,7 @@ export class ApiCreator {
     this.headers = Object.assign({}, defaultHeaders, headers || {});
     this.parseResponse = parseResponse || defaultParseResponse;
     this.transformRequest = transformRequest;
+    this.transformResponse = transformResponse;
 
     if (!isFunction(this.parseResponse)) {
       throw new Error("to-api: 'parseResponse' is not a function");
@@ -92,6 +96,10 @@ export class ApiCreator {
 
     if (this.transformRequest && !isFunction(this.transformRequest)) {
       throw new Error("to-api: 'transformRequest' is not a function");
+    }
+
+    if (this.transformResponse && !isFunction(this.transformResponse)) {
+      throw new Error("to-api: 'transformResponse' is not a function");
     }
 
     if (!isFunction(this.fetch)) {
@@ -110,14 +118,16 @@ export class ApiCreator {
     fetch = this.fetch,
     headers = this.headers,
     parseResponse = this.parseResponse,
-    transformRequest = this.transformRequest
+    transformRequest = this.transformRequest,
+    transformResponse = this.transformResponse
   } = {}) {
     return new ApiCreator({
       baseUrl,
       fetch,
       headers,
       parseResponse,
-      transformRequest
+      transformRequest,
+      transformResponse
     });
   }
 
@@ -151,7 +161,8 @@ export class ApiCreator {
       baseUrl = this.baseUrl,
       fetch = this.fetch,
       parseResponse = this.parseResponse,
-      transformRequest = this.transformRequest
+      transformRequest = this.transformRequest,
+      transformResponse = this.transformResponse
     } = {}
   ) {
     return Object.keys(methods).reduce((api, methodName) => {
@@ -193,11 +204,21 @@ export class ApiCreator {
           body: toJson ? JSON.stringify(body) : body
         };
 
-        return fetch(url, options).then(
+        const _transformResponse = isFunction(methodSpec.transformResponse)
+          ? methodSpec.transformResponse
+          : isFunction(transformResponse) ? transformResponse : empty;
+
+        const response = fetch(url, options).then(
           isFunction(methodSpec.parseResponse)
             ? methodSpec.parseResponse
             : parseResponse
         );
+
+        if (isFunction(response.then)) {
+          return response.then(_transformResponse);
+        }
+
+        return _transformResponse(response);
       };
 
       api[methodName] = new Function(
