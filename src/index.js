@@ -1,6 +1,14 @@
 import fetchOrig from 'isomorphic-fetch';
-import omit from 'lodash/omit';
-import isFunction from 'lodash/isFunction';
+
+function isFunction(func) {
+  return typeof func === 'function';
+}
+
+function omit(obj, fields) {
+  return Object.keys(obj || {})
+    .filter(key => fields.indexOf(key) === -1)
+    .reduce((result, key) => Object.assign(result, { [key]: obj[key] }), {});
+}
 
 const pathParamsPattern = new RegExp(':([a-z-d]+)', 'ig');
 
@@ -197,16 +205,17 @@ export class ApiCreator {
         );
         const contentType =
           this._getHeader(headers, 'content-type').value || '';
-        const toJson = contentType.indexOf('json') !== -1;
         const options = {
           method: method.toUpperCase(),
           headers,
-          body: toJson ? JSON.stringify(body) : body
+          body: contentType.indexOf('json') !== -1 ? JSON.stringify(body) : body
         };
 
         const _transformResponse = isFunction(methodSpec.transformResponse)
           ? methodSpec.transformResponse
-          : isFunction(transformResponse) ? transformResponse : empty;
+          : isFunction(transformResponse)
+            ? transformResponse
+            : empty;
 
         const response = fetch(url, options).then(
           isFunction(methodSpec.parseResponse)

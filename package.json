@@ -10,8 +10,7 @@
   ],
   "scripts": {
     "build": "babel src --out-dir dist --ignore *.test.js",
-    "test": "jest",
-    "prepublish": "npm test && npm run build"
+    "test": "jest"
   },
   "author": "Vladimir Shushkov <vladimir@shushkov.ru>",
   "repository": {
@@ -27,8 +26,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "isomorphic-fetch": "^2.2.1",
-    "lodash": "^4.17.10"
+    "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -37,7 +35,7 @@
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-stage-0": "^6.24.1",
-    "expect": "^22.4.3",
-    "jest-cli": "^22.4.4"
+    "expect": "^23.6.0",
+    "jest-cli": "^23.6.0"
   }
 }
