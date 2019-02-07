@@ -201,7 +201,9 @@ export class ApiCreator {
         const headers = Object.assign(
           {},
           this.headers,
-          methodSpec.headers || {}
+          (isFunction(methodSpec.headers)
+            ? methodSpec.headers({ body, params })
+            : methodSpec.headers) || {}
         );
         const contentType =
           this._getHeader(headers, 'content-type').value || '';

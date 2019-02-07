@@ -474,4 +474,34 @@ describe('API', () => {
       })
     );
   });
+
+  it('uses `header` as function', () => {
+    const creator = apiCreator();
+
+    const model = creator.create(
+      {
+        method1: {
+          path: '/:idOnceAgain/:id',
+          method: 'POST',
+          headers({ body, params }) {
+            return {
+              'my-header': JSON.stringify({ body, params })
+            };
+          }
+        }
+      },
+      { baseUrl, fetch }
+    );
+
+    const params = { id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' };
+
+    return model
+      .method1(params)
+      .then(({ result: { options: { headers } } }) => {
+        expect(JSON.parse(headers['my-header'])).toEqual({
+          body: { anotherId: params.anotherId },
+          params
+        });
+      });
+  });
 });
