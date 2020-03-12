@@ -45,7 +45,7 @@ function toQueryString(obj) {
 }
 
 function parseParams(_inputParams = {}, methodSpec, baseUrl, transformRequest) {
-  const { path = '', method = 'get' } = methodSpec;
+  let { path = '', method = 'get' } = methodSpec;
 
   const inputParams = isFunction(transformRequest)
     ? transformRequest(_inputParams)
@@ -55,7 +55,10 @@ function parseParams(_inputParams = {}, methodSpec, baseUrl, transformRequest) {
     baseUrl.lastIndexOf('/') === baseUrl.length - 1
       ? baseUrl.substring(0, baseUrl.length - 1)
       : baseUrl;
-  url += `${path.indexOf('/') === 0 ? path : '/' + path}`;
+
+  if (path && path !== '/') {
+    url += path.indexOf('/') === 0 ? path : '/' + path;
+  }
 
   let execResult;
   const pathParams = [];

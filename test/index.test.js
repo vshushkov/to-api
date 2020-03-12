@@ -1,7 +1,7 @@
 import expect from 'expect';
 import apiCreator, { parseResponse } from '../src';
 
-const baseUrl = 'http://api/users/';
+const baseUrl = 'http://api/users';
 const createResponse = ({ status, body }) => ({
   status,
   json: () => Promise.resolve(JSON.parse(body))
@@ -35,7 +35,7 @@ function assert(user) {
     user.updateById({ id: '123', email: 'bla2@bla2.com' }).then(response =>
       expect(response).toEqual({
         result: {
-          url: `${baseUrl}123`,
+          url: `${baseUrl}/123`,
           options: {
             method: 'PUT',
             body: '{"email":"bla2@bla2.com"}',
@@ -51,7 +51,7 @@ function assert(user) {
     user.patchById({ id: '123', email: 'bla3@bla3.com' }).then(response =>
       expect(response).toEqual({
         result: {
-          url: `${baseUrl}123`,
+          url: `${baseUrl}/123`,
           options: {
             method: 'PATCH',
             body: '{"email":"bla3@bla3.com"}',
@@ -67,7 +67,7 @@ function assert(user) {
     user.deleteById({ id: '123' }).then(response =>
       expect(response).toEqual({
         result: {
-          url: `${baseUrl}123`,
+          url: `${baseUrl}/123`,
           options: {
             method: 'DELETE',
             headers: {
@@ -97,7 +97,7 @@ function assert(user) {
     user.findById({ id: '123' }).then(response =>
       expect(response).toEqual({
         result: {
-          url: `${baseUrl}123`,
+          url: `${baseUrl}/123`,
           options: {
             method: 'GET',
             headers: {
