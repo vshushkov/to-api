@@ -5,11 +5,15 @@ Library `to-api` generates REST API client with [`fetch`](https://fetch.spec.wha
 ## Usage
 
 ```js
-import apiCreator from 'to-api';
+import create from 'to-api';
 
-const creator = apiCreator({ baseUrl: 'http://api/users' });
+const clientApi = create({ baseUrl: 'http://api/users' });
 
-const user = creator.create({
+clientApi
+  .addHeader('Authorization', 'bearer ...')
+  .processResponse(({ data }) => data);
+
+const usersClient = clientApi({
   create: 'POST /',
   updateById: 'PUT /:id',
   deleteById: 'DELETE /:id',
@@ -17,11 +21,10 @@ const user = creator.create({
   findById: 'GET /:id'
 });
 
-user.create({ email: 'user@example.com' })
-  .then(response => ...);
-
-user.findById({ id: 'user-id' })
-  .then(response => ...);
+(async () => {
+    const newUser = await usersClient.create({ email: 'user@example.com' });
+    const user = await usersClient.findById({ id: 'user-id' });
+})();
 ```
 
 More examples you can find in tests.
