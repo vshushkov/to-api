@@ -297,6 +297,34 @@ describe('API', () => {
     );
   });
 
+  it('remove headers via method', () => {
+    const creator = apiCreator({ fetch });
+
+    const user = creator.create({
+      findById: {
+        path: '/:id',
+        method: 'get',
+        headers: {
+          'Content-Type': undefined
+        }
+      }
+    });
+
+    return user.findById({ id: 'value' }).then(response =>
+      expect(response).toEqual({
+        result: {
+          url: '/value',
+          options: {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json'
+            }
+          }
+        }
+      })
+    );
+  });
+
   it('several path params', () => {
     const creator = apiCreator();
 

@@ -212,7 +212,13 @@ export class ApiCreator {
           this._getHeader(headers, 'content-type').value || '';
         const options = {
           method: method.toUpperCase(),
-          headers,
+          headers: Object.keys(headers).reduce(
+            (result, name) => ({
+              ...result,
+              ...(headers[name] ? { [name]: headers[name] } : {})
+            }),
+            {}
+          ),
           body: contentType.indexOf('json') !== -1 ? JSON.stringify(body) : body
         };
 
