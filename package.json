@@ -26,7 +26,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "isomorphic-fetch": "^2.2.1"
+    "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
