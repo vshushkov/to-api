@@ -98,7 +98,8 @@ export class ApiCreator {
     parseResponse,
     transformRequest,
     transformResponse,
-    headers
+    headers,
+    toQueryString = defaultToQueryString
   } = {}) {
     this.baseUrl = (baseUrl || '/').toString();
     this.fetch = fetch || fetchOrig;
@@ -106,6 +107,7 @@ export class ApiCreator {
     this.parseResponse = parseResponse || defaultParseResponse;
     this.transformRequest = transformRequest;
     this.transformResponse = transformResponse;
+    this.toQueryString = toQueryString;
 
     if (!isFunction(this.parseResponse)) {
       throw new Error("to-api: 'parseResponse' is not a function");
@@ -136,7 +138,8 @@ export class ApiCreator {
     headers = this.headers,
     parseResponse = this.parseResponse,
     transformRequest = this.transformRequest,
-    transformResponse = this.transformResponse
+    transformResponse = this.transformResponse,
+    toQueryString = this.toQueryString
   } = {}) {
     return new ApiCreator({
       baseUrl,
@@ -144,7 +147,8 @@ export class ApiCreator {
       headers,
       parseResponse,
       transformRequest,
-      transformResponse
+      transformResponse,
+      toQueryString
     });
   }
 
@@ -180,7 +184,7 @@ export class ApiCreator {
       parseResponse = this.parseResponse,
       transformRequest = this.transformRequest,
       transformResponse = this.transformResponse,
-      toQueryString = defaultToQueryString
+      toQueryString = this.toQueryString
     } = {}
   ) {
     return Object.keys(methods).reduce((api, methodName) => {
