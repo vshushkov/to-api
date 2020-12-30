@@ -31,7 +31,7 @@ export function defaultParseResponse(response) {
   return response.json().then(err => Promise.reject(err));
 }
 
-function toQueryString(obj) {
+function defaultToQueryString(obj) {
   const parts = [];
   let value;
   for (let i in obj) {
@@ -44,7 +44,13 @@ function toQueryString(obj) {
   return parts.join('&');
 }
 
-function parseParams(_inputParams = {}, methodSpec, baseUrl, transformRequest) {
+function parseParams(
+  _inputParams = {},
+  methodSpec,
+  baseUrl,
+  transformRequest,
+  toQueryString
+) {
   let { path = '', method = 'get' } = methodSpec;
 
   const inputParams = isFunction(transformRequest)
@@ -173,7 +179,8 @@ export class ApiCreator {
       fetch = this.fetch,
       parseResponse = this.parseResponse,
       transformRequest = this.transformRequest,
-      transformResponse = this.transformResponse
+      transformResponse = this.transformResponse,
+      toQueryString = defaultToQueryString
     } = {}
   ) {
     return Object.keys(methods).reduce((api, methodName) => {
@@ -199,7 +206,8 @@ export class ApiCreator {
           baseUrl,
           isFunction(methodSpec.transformRequest)
             ? methodSpec.transformRequest
-            : transformRequest
+            : transformRequest,
+          toQueryString
         );
         const headers = Object.assign(
           {},
