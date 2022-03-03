@@ -52,19 +52,26 @@ function parseParams(
   toQueryString
 ) {
   let { path = '', method = 'get' } = methodSpec;
+  let baseSearch = ''
+  try {
+    baseSearch = new URL(baseUrl).search
+  } catch (e) {}
+  const _baseUrl = baseUrl.replace(baseSearch, '')
 
   const inputParams = isFunction(transformRequest)
     ? transformRequest(_inputParams)
     : _inputParams;
 
   let url =
-    baseUrl.lastIndexOf('/') === baseUrl.length - 1
-      ? baseUrl.substring(0, baseUrl.length - 1)
-      : baseUrl;
+    _baseUrl.lastIndexOf('/') === _baseUrl.length - 1
+      ? _baseUrl.substring(0, _baseUrl.length - 1)
+      : _baseUrl;
 
   if (path && path !== '/') {
     url += path.indexOf('/') === 0 ? path : '/' + path;
   }
+
+  url += baseSearch
 
   let execResult;
   const pathParams = [];

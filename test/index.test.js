@@ -1,7 +1,9 @@
 import expect from 'expect';
-import apiCreator, { parseResponse } from '../src';
+import sinon from 'sinon';
+import apiCreator from '../src';
 
 const baseUrl = 'http://api/users';
+const baseUrlWithQueryParams = 'http://api/users?foo=bar';
 const createResponse = ({ status, body }) => ({
   status,
   json: () => Promise.resolve(JSON.parse(body))
@@ -530,6 +532,30 @@ describe('API', () => {
           body: { anotherId: params.anotherId },
           params
         });
+      });
+  });
+
+  it('baseUrl with querystring', () => {
+    const fetchSpy = sinon.spy(fetch);
+    const creator = apiCreator({ baseUrl: baseUrlWithQueryParams, fetch: fetchSpy });
+
+    const model = creator.create(
+      {
+        method1: 'GET /:idOnceAgain/:id',
+        method2: 'POST /:idOnceAgain/:id'
+      }
+    );
+
+    return model.method1({ id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' })
+      .then(() => {
+        expect(fetchSpy.getCall(0).args[0])
+          .toEqual('http://api/users/value2/value1?foo=bar&anotherId=value3');
+
+        return model.method2({ id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' })
+          .then(() => {
+            expect(fetchSpy.getCall(1).args[0])
+              .toEqual('http://api/users/value2/value1?foo=bar');
+          });
       });
   });
 });
