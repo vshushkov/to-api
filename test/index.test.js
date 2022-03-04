@@ -3,7 +3,6 @@ import sinon from 'sinon';
 import apiCreator from '../src';
 
 const baseUrl = 'http://api/users';
-const baseUrlWithQueryParams = 'http://api/users?foo=bar';
 const createResponse = ({ status, body }) => ({
   status,
   json: () => Promise.resolve(JSON.parse(body))
@@ -537,6 +536,7 @@ describe('API', () => {
 
   it('baseUrl with querystring', () => {
     const fetchSpy = sinon.spy(fetch);
+    const baseUrlWithQueryParams = 'http://api/users?foo=bar';
     const creator = apiCreator({ baseUrl: baseUrlWithQueryParams, fetch: fetchSpy });
 
     const model = creator.create(
@@ -555,6 +555,31 @@ describe('API', () => {
           .then(() => {
             expect(fetchSpy.getCall(1).args[0])
               .toEqual('http://api/users/value2/value1?foo=bar');
+          });
+      });
+  });
+
+  it('baseUrl (as path) with querystring', () => {
+    const fetchSpy = sinon.spy(fetch);
+    const baseUrlWithQueryParams = '/api/users?foo=bar';
+    const creator = apiCreator({ baseUrl: baseUrlWithQueryParams, fetch: fetchSpy });
+
+    const model = creator.create(
+      {
+        method1: 'GET /:idOnceAgain/:id',
+        method2: 'POST /:idOnceAgain/:id'
+      }
+    );
+
+    return model.method1({ id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' })
+      .then(() => {
+        expect(fetchSpy.getCall(0).args[0])
+          .toEqual('/api/users/value2/value1?foo=bar&anotherId=value3');
+
+        return model.method2({ id: 'value1', idOnceAgain: 'value2', anotherId: 'value3' })
+          .then(() => {
+            expect(fetchSpy.getCall(1).args[0])
+              .toEqual('/api/users/value2/value1?foo=bar');
           });
       });
   });

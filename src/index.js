@@ -55,7 +55,12 @@ function parseParams(
   let baseSearch = ''
   try {
     baseSearch = new URL(baseUrl).search
-  } catch (e) {}
+  } catch (e) {
+    const idx = baseUrl.indexOf('?')
+    if (idx !== -1) {
+      baseSearch = baseUrl.substring(idx)
+    }
+  }
   const _baseUrl = baseUrl.replace(baseSearch, '')
 
   const inputParams = isFunction(transformRequest)
